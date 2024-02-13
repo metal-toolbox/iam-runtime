@@ -1,0 +1,20 @@
+syntax = "proto3";
+package runtime.iam.v1;
+
+option go_package = "github.com/metal-toolbox/iam-runtime/pkg/runtime/authentication";
+
+service Authentication { 
+  rpc AuthenticateSubject(AuthenticateSubjectRequest)
+    returns (AuthenticateSubjectResponse) {}
+}
+
+message AuthenticateSubjectRequest {
+  // credential is the literal credential for a subject (such as a bearer token) passed to the
+  // application with no transformations applied.
+  string credential = 1;
+}
+
+message AuthenticateSubjectResponse {
+  // subject_claims is a map of claims about the subject (such as ID and scopes).
+  map<string, string> subject_claims = 1;
+}

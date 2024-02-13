@@ -1,0 +1,61 @@
+syntax = "proto3";
+package runtime.iam.v1;
+
+option go_package = "github.com/metal-toolbox/iam-runtime/pkg/runtime/authorization";
+
+service Authorization {
+  rpc CheckAccess(CheckAccessRequest)
+    returns (CheckAccessResponse) {}
+    
+  rpc CreateRelationships(CreateRelationshipsRequest)
+    returns (CreateRelationshipsResponse) {}
+
+  rpc DeleteRelationships(DeleteRelationshipsRequest)
+    returns (DeleteRelationshipsResponse) {}
+}
+
+message Relationship {
+  // relation is the name of the relationship between two resources.
+  string relation = 1;
+  // subject_id is the ID of the subject (i.e., "other end") of the relationship.
+  string subject_id = 2;
+}
+
+message AccessRequestAction {
+  // action is the name of the action the subject is attempting to perform an action on.
+  string action = 1;
+  // resource_id is the ID of the resource the subject is attempting to perform an action on.
+  string resource_id = 2;
+}
+
+message CheckAccessRequest {
+  // credential is the literal credential for a subject (such as a bearer token) passed to the
+  // application with no transformations applied.
+  string credential = 1;
+  // actions is the set of all actions to check access for. All of these must be allowed for the
+  // request itself to be allowed.
+  repeated AccessRequestAction actions = 2;
+}
+
+message CheckAccessResponse {
+}
+
+message CreateRelationshipsRequest {
+  // resource_id is the ID of the resource to create relationships for.
+  string resource_id = 1;
+  // relationships is the set of relationships to create.
+  repeated Relationship relationships = 2;
+}
+
+message CreateRelationshipsResponse {
+}
+
+message DeleteRelationshipsRequest {
+  // resource_id is the ID of the resource to delete relationships for.
+  string resource_id = 1;
+  // relationships is the set of relationships to delete.
+  repeated Relationship relationships = 2;
+}
+
+message DeleteRelationshipsResponse {
+}
