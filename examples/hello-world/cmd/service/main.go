@@ -50,18 +50,18 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 func (s *server) handleWhoAmI(w http.ResponseWriter, req *http.Request) {
-	authRequest := &authentication.AuthenticateSubjectRequest{
+	authRequest := &authentication.ValidateCredentialRequest{
 		Credential: getToken(req),
 	}
 
-	resp, err := s.runtime.AuthenticateSubject(req.Context(), authRequest)
+	resp, err := s.runtime.ValidateCredential(req.Context(), authRequest)
 	if err != nil {
 		log.Printf("error getting user info: %v", err)
 		writeError(w, err)
 		return
 	}
 
-	sub := resp.SubjectClaims["sub"]
+	sub := resp.SubjectId
 	msg := fmt.Sprintf("you are: %s\n", sub)
 
 	if _, err := w.Write([]byte(msg)); err != nil {

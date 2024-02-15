@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -46,16 +47,24 @@ type authenticationServer struct {
 	authentication.UnimplementedAuthenticationServer
 }
 
-func (s *authenticationServer) AuthenticateSubject(ctx context.Context, req *authentication.AuthenticateSubjectRequest) (*authentication.AuthenticateSubjectResponse, error) {
+func (s *authenticationServer) ValidateCredential(ctx context.Context, req *authentication.ValidateCredentialRequest) (*authentication.ValidateCredentialResponse, error) {
 	if req.GetCredential() != "hello" {
 		err := status.Error(codes.Unauthenticated, "who are you?")
 		return nil, err
 	}
 
-	out := &authentication.AuthenticateSubjectResponse{
-		SubjectClaims: map[string]string{
-			"sub": "hello",
-		},
+	claimsMap := map[string]any{
+		"aud": "world",
+	}
+
+	claims, err := structpb.NewStruct(claimsMap)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &authentication.ValidateCredentialResponse{
+		SubjectId: "hello",
+		Claims:    claims,
 	}
 
 	return out, nil
