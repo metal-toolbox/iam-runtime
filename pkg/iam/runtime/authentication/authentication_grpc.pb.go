@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthenticationClient interface {
-	AuthenticateSubject(ctx context.Context, in *AuthenticateSubjectRequest, opts ...grpc.CallOption) (*AuthenticateSubjectResponse, error)
+	ValidateCredential(ctx context.Context, in *ValidateCredentialRequest, opts ...grpc.CallOption) (*ValidateCredentialResponse, error)
 }
 
 type authenticationClient struct {
@@ -33,9 +33,9 @@ func NewAuthenticationClient(cc grpc.ClientConnInterface) AuthenticationClient {
 	return &authenticationClient{cc}
 }
 
-func (c *authenticationClient) AuthenticateSubject(ctx context.Context, in *AuthenticateSubjectRequest, opts ...grpc.CallOption) (*AuthenticateSubjectResponse, error) {
-	out := new(AuthenticateSubjectResponse)
-	err := c.cc.Invoke(ctx, "/runtime.iam.v1.Authentication/AuthenticateSubject", in, out, opts...)
+func (c *authenticationClient) ValidateCredential(ctx context.Context, in *ValidateCredentialRequest, opts ...grpc.CallOption) (*ValidateCredentialResponse, error) {
+	out := new(ValidateCredentialResponse)
+	err := c.cc.Invoke(ctx, "/runtime.iam.v1.Authentication/ValidateCredential", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *authenticationClient) AuthenticateSubject(ctx context.Context, in *Auth
 // All implementations must embed UnimplementedAuthenticationServer
 // for forward compatibility
 type AuthenticationServer interface {
-	AuthenticateSubject(context.Context, *AuthenticateSubjectRequest) (*AuthenticateSubjectResponse, error)
+	ValidateCredential(context.Context, *ValidateCredentialRequest) (*ValidateCredentialResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
 }
 
@@ -54,8 +54,8 @@ type AuthenticationServer interface {
 type UnimplementedAuthenticationServer struct {
 }
 
-func (UnimplementedAuthenticationServer) AuthenticateSubject(context.Context, *AuthenticateSubjectRequest) (*AuthenticateSubjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateSubject not implemented")
+func (UnimplementedAuthenticationServer) ValidateCredential(context.Context, *ValidateCredentialRequest) (*ValidateCredentialResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateCredential not implemented")
 }
 func (UnimplementedAuthenticationServer) mustEmbedUnimplementedAuthenticationServer() {}
 
@@ -70,20 +70,20 @@ func RegisterAuthenticationServer(s grpc.ServiceRegistrar, srv AuthenticationSer
 	s.RegisterService(&Authentication_ServiceDesc, srv)
 }
 
-func _Authentication_AuthenticateSubject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthenticateSubjectRequest)
+func _Authentication_ValidateCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateCredentialRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthenticationServer).AuthenticateSubject(ctx, in)
+		return srv.(AuthenticationServer).ValidateCredential(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/runtime.iam.v1.Authentication/AuthenticateSubject",
+		FullMethod: "/runtime.iam.v1.Authentication/ValidateCredential",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticationServer).AuthenticateSubject(ctx, req.(*AuthenticateSubjectRequest))
+		return srv.(AuthenticationServer).ValidateCredential(ctx, req.(*ValidateCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +96,8 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthenticationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AuthenticateSubject",
-			Handler:    _Authentication_AuthenticateSubject_Handler,
+			MethodName: "ValidateCredential",
+			Handler:    _Authentication_ValidateCredential_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

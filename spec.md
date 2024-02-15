@@ -41,7 +41,7 @@ This specification defines an interface and minimum operational requirements for
 
 ### Architecture
 
-The primary focus of this specification is the communication between a workload and a runtime implementation. The specification thus defines the gRPC interfaces a runtime must expose, as well as optional guidance on how to deploy the runtime itself. The following diagram illustrates how a workload container in a pod communicates with a runtime container in the same pod to execute a function, `AuthenticateSubject`.
+The primary focus of this specification is the communication between a workload and a runtime implementation. The specification thus defines the gRPC interfaces a runtime must expose, as well as optional guidance on how to deploy the runtime itself. The following diagram illustrates how a workload container in a pod communicates with a runtime container in the same pod to execute a function, `ValidateCredential`.
 
 #### Figure 1: High-level runtime architecture example
 
@@ -49,11 +49,11 @@ The primary focus of this specification is the communication between a workload 
 graph TB
     subgraph "Application pod"
         subgraph "Workload container"
-            W[Workload] --"AuthenticateSubject"--> C[gRPC client]
+            W[Workload] --"ValidateCredential"--> C[gRPC client]
         end
         subgraph "Runtime container"
             C <-."runtime.sock".-> S[gRPC server]
-            S --"AuthenticateSubject"--> R[Runtime]
+            S --"ValidateCredential"--> R[Runtime]
         end
     end
 ```
@@ -70,27 +70,30 @@ The Authentication service manages verification of credentials provided to appli
 
 ```proto
 service Authentication { 
-  rpc AuthenticateSubject(AuthenticateSubjectRequest)
-    returns (AuthenticateSubjectResponse) {}
+  rpc ValidateCredential(ValidateCredentialRequest)
+    returns (ValidateCredentialResponse) {}
 }
 ```
 
-##### `AuthenticateSubject`
+##### `ValidateCredential`
 
 ```proto
-message AuthenticateSubjectRequest {
+message ValidateCredentialRequest {
   // credential is the literal credential for a subject (such as a bearer token) passed to the
   // application with no transformations applied.
   string credential = 1;
 }
 
-message AuthenticateSubjectResponse {
-  // subject_claims is a map of claims about the subject (such as ID and scopes).
-  map<string, string> subject_claims = 1;
+message ValidateCredentialResponse {
+  // subject_id is the ID of the subject represented by the credential.
+  string subject_id = 1;
+
+  // claims is a set of claims about the subject.
+  google.protobuf.Struct claims = 2;
 }
 ```
 
-`AuthenticateSubject` is a REQUIRED operation which verifies that the credential provided to the application maps to a known subject, such as a JWT with a valid signature and expiry in the future. If the credential is not valid, runtime implementations MUST respond with gRPC status 16 (UNAUTHENTICATED) and an appropriate error message.
+`ValidateCredential` is a REQUIRED operation which verifies that the credential provided to the application maps to a known subject, such as a JWT with a valid signature and expiry in the future. If the credential is not valid, runtime implementations MUST respond with gRPC status 16 (UNAUTHENTICATED) and an appropriate error message.
 
 #### Authorization service
 
