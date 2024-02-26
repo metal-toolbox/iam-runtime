@@ -31,7 +31,7 @@ The IAM runtime will:
 
 The IAM runtime will not:
 
-* Replace existing IAM logic
+* Replace existing IAM logic in a deployment environment
 * Define runtime implementations for all IAM combinations within a deployment environment
 * Provide language-specific bindings outside of gRPC service definitions and, optionally, generated code
 
@@ -41,17 +41,17 @@ This specification defines an interface and minimum operational requirements for
 
 ### Architecture
 
-The primary focus of this specification is the communication between a workload and a runtime implementation. The specification thus defines the gRPC interfaces a runtime must expose, as well as optional guidance on how to deploy the runtime itself. The following diagram illustrates how a workload container in a pod communicates with a runtime container in the same pod to execute a function, `ValidateCredential`.
+The primary focus of this specification is the communication between a workload and a runtime implementation. The specification thus defines the gRPC interfaces a runtime must expose, as well as optional guidance on how to deploy the runtime itself. The following diagram illustrates how a workload process communicates with a runtime process in the same filesystem namespace to execute a function, `ValidateCredential`.
 
 #### Figure 1: High-level runtime architecture example
 
 ```mermaid
 graph TB
-    subgraph "Application pod"
-        subgraph "Workload container"
+    subgraph "Filesystem namespace"
+        subgraph "Workload"
             W[Workload] --"ValidateCredential"--> C[gRPC client]
         end
-        subgraph "Runtime container"
+        subgraph "Runtime"
             C <-."runtime.sock".-> S[gRPC server]
             S --"ValidateCredential"--> R[Runtime]
         end
@@ -59,6 +59,22 @@ graph TB
 ```
 
 While this example shows only a single operation being called, a runtime MUST implement every REQUIRED operation for a given service and SHOULD provide implementations for all services defined in this spec.
+
+### Client and server behavior
+
+This section describes client (workload) and server (runtime) behavior for IAM runtime implementations.
+
+#### Transport
+
+The IAM runtime MUST be reachable using a Unix Domain Socket. Network protocols such as TCP are not supported.
+
+#### Locating the runtime
+
+Clients SHOULD be configured in advance with the location of a runtime instance. Runtime implementations are expected to be deployed alongside workloads, rather than as shared services in a deployment environment. As a result, each workload in an environment SHOULD be associated with its own runtime instance.
+
+#### Authentication
+
+This specification does not define any particular method for authenticating the client.
 
 ### IAM runtime interface
 
@@ -85,15 +101,23 @@ message ValidateCredentialRequest {
 }
 
 message ValidateCredentialResponse {
-  // subject_id is the ID of the subject represented by the credential.
-  string subject_id = 1;
+  enum Result {
+    RESULT_VALID = 0;
+    RESULT_INVALID = 1;
+  }
 
-  // claims is a set of claims about the subject.
-  google.protobuf.Struct claims = 2;
+  // Result represents the decision made about whether the credential is valid. If it is valid,
+  // this field should be set to RESULT_VALID and subject should be set. Otherwise, this field
+  // should be set to RESULT_INVALID.
+  Result result = 1;
+
+  // Subject represents the actor the given token identifies. If the given credential is not valid,
+  // (i.e., result is set to RESULT_INVALID), this field's value is undefined.
+  Subject subject = 2;
 }
 ```
 
-`ValidateCredential` is a REQUIRED operation which verifies that the credential provided to the application maps to a known subject, such as a JWT with a valid signature and expiry in the future. If the credential is not valid, runtime implementations MUST respond with gRPC status 16 (UNAUTHENTICATED) and an appropriate error message.
+`ValidateCredential` is a REQUIRED operation which verifies that the credential provided to the application maps to a known subject, such as a JWT with a valid signature and expiry in the future. If the credential is valid, implementations MUST respond with `result` set to `RESULT_VALID` and `subject` populated accordingly. Otherwise, implementations MUST respond with `result` set to `RESULT_INVALID`.
 
 #### Authorization service
 
@@ -143,10 +167,18 @@ message CheckAccessRequest {
 }
 
 message CheckAccessResponse {
+  enum Result {
+    RESULT_ALLOWED = 0;
+    RESULT_DENIED = 1;
+  }
+
+  Result result = 1;
 }
 ```
 
-`CheckAccess` is a REQUIRED operation which checks that a subject has access to perform the given actions on the given resources. If all actions are allowed, runtime implementations MUST respond with a `CheckAccessResponse`. If any action is not allowed, runtime implementations MUST respond with gRPC status 7 (PERMISSION_DENIED) and an appropriate error message. As with the Validation API, if the subject credential is not valid, runtime implementations MUST respond with gRPC status 16 (UNAUTHENTICATED) and an appropriate error message.
+`CheckAccess` is a REQUIRED operation which checks that the subject identified by the given credential has access to perform the given actions on the given resources. If all given actions are allowed, runtime implementations MUST respond with `result` set to `RESULT_ALLOWED`. If any action is not allowed, runtime implementations MUST respond with `result` set to `RESULT_DENIED`.
+
+In the event that the given credential is not valid, or any action or resource is not valid for the deployment environment, implementations MUST respond with gRPC status 3 (`INVALID_ARGUMENT`).
 
 #### `CreateRelationships`
 

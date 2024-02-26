@@ -10,9 +10,7 @@ import (
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authentication"
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -31,48 +29,58 @@ type server struct {
 	}
 }
 
-func errorToHTTPStatus(err error) (int, string) {
-	switch status.Code(err) {
-	case codes.PermissionDenied:
-		return http.StatusForbidden, "can't do that!"
-	case codes.Unauthenticated:
-		return http.StatusUnauthorized, "who are you?"
-	default:
-		return http.StatusInternalServerError, "something broke, sorry"
-	}
-}
-
-func writeError(w http.ResponseWriter, err error) {
-	status, msg := errorToHTTPStatus(err)
-
+func writeMessage(w http.ResponseWriter, status int, msg string) {
 	w.WriteHeader(status)
-	w.Write([]byte(msg + "\n"))
+	if _, err := w.Write([]byte(msg + "\n")); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }
 
 func (s *server) handleWhoAmI(w http.ResponseWriter, req *http.Request) {
-	authRequest := &authentication.ValidateCredentialRequest{
+	validateRequest := &authentication.ValidateCredentialRequest{
 		Credential: getToken(req),
 	}
 
-	resp, err := s.runtime.ValidateCredential(req.Context(), authRequest)
+	resp, err := s.runtime.ValidateCredential(req.Context(), validateRequest)
 	if err != nil {
 		log.Printf("error getting user info: %v", err)
-		writeError(w, err)
+		writeMessage(w, http.StatusInternalServerError, err.Error())
+
 		return
 	}
 
-	sub := resp.SubjectId
+	if resp.Result == authentication.ValidateCredentialResponse_RESULT_INVALID {
+		writeMessage(w, http.StatusUnauthorized, "who are you?")
+	}
+
+	sub := resp.Subject.SubjectId
 	msg := fmt.Sprintf("you are: %s\n", sub)
 
-	if _, err := w.Write([]byte(msg)); err != nil {
-		log.Printf("error writing response: %v", err)
-	}
+	writeMessage(w, http.StatusOK, msg)
 }
 
 func (s *server) handleCanI(w http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query()
 	what := query.Get("what")
 	who := query.Get("who")
+
+	validateRequest := &authentication.ValidateCredentialRequest{
+		Credential: getToken(req),
+	}
+
+	credsResp, err := s.runtime.ValidateCredential(req.Context(), validateRequest)
+	if err != nil {
+		log.Printf("error getting user info: %v", err)
+		writeMessage(w, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	if credsResp.Result == authentication.ValidateCredentialResponse_RESULT_INVALID {
+		writeMessage(w, http.StatusUnauthorized, "who are you?")
+
+		return
+	}
 
 	accessRequest := &authorization.CheckAccessRequest{
 		Credential: getToken(req),
@@ -84,10 +92,17 @@ func (s *server) handleCanI(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 
-	if _, err := s.runtime.CheckAccess(req.Context(), accessRequest); err != nil {
+	accessResp, err := s.runtime.CheckAccess(req.Context(), accessRequest)
+
+	if err != nil {
 		log.Printf("error trying to do the thing: %v", err)
-		writeError(w, err)
+		writeMessage(w, http.StatusInternalServerError, err.Error())
+
 		return
+	}
+
+	if accessResp.Result == authorization.CheckAccessResponse_RESULT_DENIED {
+		writeMessage(w, http.StatusForbidden, "no!")
 	}
 
 	if _, err := w.Write([]byte("yes!\n")); err != nil {

@@ -6,7 +6,7 @@ option go_package = "github.com/metal-toolbox/iam-runtime/pkg/runtime/authorizat
 service Authorization {
   rpc CheckAccess(CheckAccessRequest)
     returns (CheckAccessResponse) {}
-    
+
   rpc CreateRelationships(CreateRelationshipsRequest)
     returns (CreateRelationshipsResponse) {}
 
@@ -38,6 +38,12 @@ message CheckAccessRequest {
 }
 
 message CheckAccessResponse {
+  enum Result {
+    RESULT_ALLOWED = 0;
+    RESULT_DENIED = 1;
+  }
+
+  Result result = 1;
 }
 
 message CreateRelationshipsRequest {

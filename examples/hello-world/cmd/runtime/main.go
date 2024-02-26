@@ -49,8 +49,11 @@ type authenticationServer struct {
 
 func (s *authenticationServer) ValidateCredential(ctx context.Context, req *authentication.ValidateCredentialRequest) (*authentication.ValidateCredentialResponse, error) {
 	if req.GetCredential() != "hello" {
-		err := status.Error(codes.Unauthenticated, "who are you?")
-		return nil, err
+		out := &authentication.ValidateCredentialResponse{
+			Result: authentication.ValidateCredentialResponse_RESULT_INVALID,
+		}
+
+		return out, nil
 	}
 
 	claimsMap := map[string]any{
@@ -63,8 +66,11 @@ func (s *authenticationServer) ValidateCredential(ctx context.Context, req *auth
 	}
 
 	out := &authentication.ValidateCredentialResponse{
-		SubjectId: "hello",
-		Claims:    claims,
+		Result: authentication.ValidateCredentialResponse_RESULT_VALID,
+		Subject: &authentication.Subject{
+			SubjectId: "hello",
+			Claims:    claims,
+		},
 	}
 
 	return out, nil

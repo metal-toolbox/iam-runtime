@@ -5,6 +5,14 @@ import "google/protobuf/struct.proto";
 
 option go_package = "github.com/metal-toolbox/iam-runtime/pkg/runtime/authentication";
 
+message Subject {
+  // subject_id is the ID of the subject.
+  string subject_id = 1;
+
+  // claims is a set of claims about the subject.
+  google.protobuf.Struct claims = 2;
+}
+
 service Authentication { 
   rpc ValidateCredential(ValidateCredentialRequest)
     returns (ValidateCredentialResponse) {}
@@ -17,9 +25,17 @@ message ValidateCredentialRequest {
 }
 
 message ValidateCredentialResponse {
-  // subject_id is the ID of the subject represented by the credential.
-  string subject_id = 1;
+  enum Result {
+    RESULT_VALID = 0;
+    RESULT_INVALID = 1;
+  }
 
-  // claims is a set of claims about the subject.
-  google.protobuf.Struct claims = 2;
+  // Result represents the decision made about whether the credential is valid. If it is valid,
+  // this field should be set to RESULT_VALID and subject should be set. Otherwise, this field
+  // should be set to RESULT_INVALID.
+  Result result = 1;
+
+  // Subject represents the actor the given token identifies. If the given credential is not valid,
+  // (i.e., result is set to RESULT_INVALID), this field's value is undefined.
+  Subject subject = 2;
 }
