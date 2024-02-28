@@ -51,6 +51,8 @@ func (s *server) handleWhoAmI(w http.ResponseWriter, req *http.Request) {
 
 	if resp.Result == authentication.ValidateCredentialResponse_RESULT_INVALID {
 		writeMessage(w, http.StatusUnauthorized, "who are you?")
+
+		return
 	}
 
 	sub := resp.Subject.SubjectId
@@ -103,6 +105,8 @@ func (s *server) handleCanI(w http.ResponseWriter, req *http.Request) {
 
 	if accessResp.Result == authorization.CheckAccessResponse_RESULT_DENIED {
 		writeMessage(w, http.StatusForbidden, "no!")
+
+		return
 	}
 
 	if _, err := w.Write([]byte("yes!\n")); err != nil {

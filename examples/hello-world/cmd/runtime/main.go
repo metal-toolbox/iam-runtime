@@ -29,18 +29,23 @@ func (s *authorizationServer) CheckAccess(ctx context.Context, req *authorizatio
 
 	log.Printf("received token: %s", tok)
 	if tok != "hello" {
-		err := status.Error(codes.Unauthenticated, "who are you?")
+		err := status.Error(codes.InvalidArgument, "who are you?")
 		return nil, err
 	}
 
+	result := authorization.CheckAccessResponse_RESULT_ALLOWED
+
 	for _, action := range req.Actions {
 		if action.GetAction() != "greet" || action.GetResourceId() != "world" {
-			err := status.Error(codes.PermissionDenied, "what are you trying to do?")
-			return nil, err
+			result = authorization.CheckAccessResponse_RESULT_DENIED
 		}
 	}
 
-	return &authorization.CheckAccessResponse{}, nil
+	out := &authorization.CheckAccessResponse{
+		Result: result,
+	}
+
+	return out, nil
 }
 
 type authenticationServer struct {
@@ -48,7 +53,7 @@ type authenticationServer struct {
 }
 
 func (s *authenticationServer) ValidateCredential(ctx context.Context, req *authentication.ValidateCredentialRequest) (*authentication.ValidateCredentialResponse, error) {
-	if req.GetCredential() != "hello" {
+	if req.Credential != "hello" {
 		out := &authentication.ValidateCredentialResponse{
 			Result: authentication.ValidateCredentialResponse_RESULT_INVALID,
 		}
