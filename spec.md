@@ -94,6 +94,14 @@ service Authentication {
 ##### `ValidateCredential`
 
 ```proto
+message Subject {
+  // subject_id is the ID of the subject.
+  string subject_id = 1;
+
+  // claims is a set of claims about the subject.
+  google.protobuf.Struct claims = 2;
+}
+
 message ValidateCredentialRequest {
   // credential is the literal credential for a subject (such as a bearer token) passed to the
   // application with no transformations applied.
