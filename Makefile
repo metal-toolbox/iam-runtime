@@ -13,4 +13,6 @@ proto: | go-mod
                    --go-grpc_opt=paths=source_relative \
                    --go_out=$(ROOT_DIR)/pkg/iam/runtime \
                    --go-grpc_out=$(ROOT_DIR)/pkg/iam/runtime \
-                   authentication/authentication.proto authorization/authorization.proto
+                   authentication/authentication.proto \
+                   authorization/authorization.proto \
+                   identity/identity.proto
