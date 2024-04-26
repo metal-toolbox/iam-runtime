@@ -10,6 +10,7 @@ import (
 
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authentication"
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
+	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -81,6 +82,22 @@ func (s *authenticationServer) ValidateCredential(ctx context.Context, req *auth
 	return out, nil
 }
 
+type identityServer struct {
+	identity.UnimplementedIdentityServer
+}
+
+func (s *identityServer) GetAccessToken(ctx context.Context, req *identity.GetAccessTokenRequest) (*identity.GetAccessTokenResponse, error) {
+	if req.Token != "hello" {
+		return nil, status.Error(codes.InvalidArgument, "unknown token")
+	}
+
+	out := &identity.GetAccessTokenResponse{
+		Token: "world",
+	}
+
+	return out, nil
+}
+
 func main() {
 	flag.Parse()
 
@@ -99,6 +116,7 @@ func main() {
 	srv := grpc.NewServer()
 	authorization.RegisterAuthorizationServer(srv, &authorizationServer{})
 	authentication.RegisterAuthenticationServer(srv, &authenticationServer{})
+	identity.RegisterIdentityServer(srv, &identityServer{})
 
 	log.Printf("runtime listening at %s", listener.Addr())
 

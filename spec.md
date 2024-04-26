@@ -219,3 +219,33 @@ message DeleteRelationshipsResponse {
 ```
 
 `DeleteRelationships` is an OPTIONAL operation which deletes relationships between a resource and some other set of resources for policy enforcement. If any relationships are not valid, runtime implementations MUST respond with gRPC status 3 (INVALID_ARGUMENT).
+
+#### Identity service
+
+The Identity service handles identity generation for applications and is defined as follows:
+
+```proto
+service Identity {
+  rpc GetAccessToken(GetAccessTokenRequest)
+    returns (GetAccessTokenResponse) {}
+}
+```
+
+##### `GetAccessToken`
+
+```proto
+message GetAccessTokenRequest {
+  // Token is the literal token for a subject (such as a bearer token) passed to the
+  // application with no transformations applied.
+  string token = 1;
+}
+
+message GetAccessTokenResponse {
+  // Token is the requested access token returned by the service.
+  string token = 1;
+}
+```
+
+`GetAccessToken` is an OPTIONAL operation which requests a new access token from the runtime.
+If the token provided in the request is invalid, runtime implementations MUST respond with gRPC status 3 (INVALID_ARGUMENT).
+If the runtime implementation produces an error which is NOT related to token validity, runtime implementations MUST respond with gRPC status 13 (INTERNAL).

@@ -9,6 +9,7 @@ import (
 
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authentication"
 	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authorization"
+	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -26,6 +27,7 @@ type server struct {
 	runtime interface {
 		authorization.AuthorizationClient
 		authentication.AuthenticationClient
+		identity.IdentityClient
 	}
 }
 
@@ -114,6 +116,25 @@ func (s *server) handleCanI(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *server) handleAccessToken(w http.ResponseWriter, req *http.Request) {
+	tokenRequest := &identity.GetAccessTokenRequest{
+		Token: getToken(req),
+	}
+
+	resp, err := s.runtime.GetAccessToken(req.Context(), tokenRequest)
+	if err != nil {
+		log.Printf("error getting access token: %v", err)
+
+		writeMessage(w, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	msg := fmt.Sprintf("new token: %s", resp.Token)
+
+	writeMessage(w, http.StatusOK, msg)
+}
+
 func main() {
 	flag.Parse()
 
@@ -125,10 +146,12 @@ func main() {
 	var runtime struct {
 		authorization.AuthorizationClient
 		authentication.AuthenticationClient
+		identity.IdentityClient
 	}
 
 	runtime.AuthorizationClient = authorization.NewAuthorizationClient(conn)
 	runtime.AuthenticationClient = authentication.NewAuthenticationClient(conn)
+	runtime.IdentityClient = identity.NewIdentityClient(conn)
 
 	srv := &server{
 		runtime: runtime,
@@ -136,6 +159,7 @@ func main() {
 
 	http.HandleFunc("/whoami", srv.handleWhoAmI)
 	http.HandleFunc("/can-i", srv.handleCanI)
+	http.HandleFunc("/access-token", srv.handleAccessToken)
 
 	log.Printf("server listening at %s", *address)
 

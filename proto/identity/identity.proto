@@ -1,0 +1,20 @@
+syntax = "proto3";
+package runtime.iam.v1;
+
+option go_package = "github.com/metal-toolbox/iam-runtime/pkg/runtime/identity";
+
+service Identity {
+  rpc GetAccessToken(GetAccessTokenRequest)
+    returns (GetAccessTokenResponse) {}
+}
+
+message GetAccessTokenRequest {
+  // Token is the literal token for a subject (such as a bearer token) passed to the
+  // application with no transformations applied.
+  string token = 1;
+}
+
+message GetAccessTokenResponse {
+  // Token is the requested access token returned by the service.
+  string token = 1;
+}
