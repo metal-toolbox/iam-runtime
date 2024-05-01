@@ -243,4 +243,4 @@ message GetAccessTokenResponse {
 ```
 
 `GetAccessToken` is an OPTIONAL operation which requests a new access token from the runtime.
-If the runtime implementation produces an error, runtime implementations MUST respond with gRPC status 13 (INTERNAL).
+Authentication of the client is the responsibility of the runtime implementation. In the event of an error, runtime implementations MUST respond with gRPC status 13 (INTERNAL).
