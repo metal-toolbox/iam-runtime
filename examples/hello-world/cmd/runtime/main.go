@@ -87,10 +87,6 @@ type identityServer struct {
 }
 
 func (s *identityServer) GetAccessToken(ctx context.Context, req *identity.GetAccessTokenRequest) (*identity.GetAccessTokenResponse, error) {
-	if req.Token != "hello" {
-		return nil, status.Error(codes.InvalidArgument, "unknown token")
-	}
-
 	out := &identity.GetAccessTokenResponse{
 		Token: "world",
 	}
