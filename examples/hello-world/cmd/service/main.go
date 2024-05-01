@@ -117,11 +117,7 @@ func (s *server) handleCanI(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *server) handleAccessToken(w http.ResponseWriter, req *http.Request) {
-	tokenRequest := &identity.GetAccessTokenRequest{
-		Token: getToken(req),
-	}
-
-	resp, err := s.runtime.GetAccessToken(req.Context(), tokenRequest)
+	resp, err := s.runtime.GetAccessToken(req.Context(), &identity.GetAccessTokenRequest{})
 	if err != nil {
 		log.Printf("error getting access token: %v", err)
 

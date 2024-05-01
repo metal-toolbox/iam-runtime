@@ -234,11 +234,7 @@ service Identity {
 ##### `GetAccessToken`
 
 ```proto
-message GetAccessTokenRequest {
-  // Token is the literal token for a subject (such as a bearer token) passed to the
-  // application with no transformations applied.
-  string token = 1;
-}
+message GetAccessTokenRequest {}
 
 message GetAccessTokenResponse {
   // Token is the requested access token returned by the service.
@@ -247,5 +243,4 @@ message GetAccessTokenResponse {
 ```
 
 `GetAccessToken` is an OPTIONAL operation which requests a new access token from the runtime.
-If the token provided in the request is invalid, runtime implementations MUST respond with gRPC status 3 (INVALID_ARGUMENT).
-If the runtime implementation produces an error which is NOT related to token validity, runtime implementations MUST respond with gRPC status 13 (INTERNAL).
+If the runtime implementation produces an error, runtime implementations MUST respond with gRPC status 13 (INTERNAL).

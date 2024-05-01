@@ -8,11 +8,7 @@ service Identity {
     returns (GetAccessTokenResponse) {}
 }
 
-message GetAccessTokenRequest {
-  // Token is the literal token for a subject (such as a bearer token) passed to the
-  // application with no transformations applied.
-  string token = 1;
-}
+message GetAccessTokenRequest {}
 
 message GetAccessTokenResponse {
   // Token is the requested access token returned by the service.
