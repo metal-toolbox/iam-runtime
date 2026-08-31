@@ -1,12 +1,12 @@
 module github.com/metal-toolbox/iam-runtime
 
-go 1.22
+go 1.23
 
 toolchain go1.23.6
 
 require (
 	google.golang.org/grpc v1.70.0
-	google.golang.org/protobuf v1.36.5
+	google.golang.org/protobuf v1.36.12
 )
 
 require (
