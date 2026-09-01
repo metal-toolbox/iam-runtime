@@ -2,7 +2,7 @@ module github.com/metal-toolbox/iam-runtime
 
 go 1.22
 
-toolchain go1.23.6
+toolchain go1.27.1
 
 require (
 	google.golang.org/grpc v1.70.0
